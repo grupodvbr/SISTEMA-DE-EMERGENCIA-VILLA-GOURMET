@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel de Pedidos - Villa Gourmet</title>
+  <title>Painel de Pedidos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f1f4f5;
       margin: 0;
-      padding: 0;
     }
+
     header {
       background: #fff;
       padding: 10px 20px;
@@ -19,9 +19,11 @@
       gap: 15px;
       border-bottom: 1px solid #ddd;
     }
+
     header img {
       height: 40px;
     }
+
     header h1 {
       margin: 0;
       font-size: 1.4em;
@@ -89,14 +91,14 @@
 
   <header>
     <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo" />
-    <h1>Painel de Pedidos Villa Gourmet</h1>
+    <h1>Painel de Requisições Delícia Gourmet</h1>
   </header>
 
   <div class="container">
     <h2>Pedidos Registrados</h2>
 
     <div class="filtros">
-      <input type="date" id="filtroData" />
+      <input type="date" id="filtroData">
       <select id="filtroGarcom">
         <option value="">Filtrar por Garçom</option>
       </select>
@@ -115,28 +117,26 @@
         </tr>
       </thead>
       <tbody>
-        <!-- conteúdo gerado dinamicamente -->
+        <!-- Preenchido via JS -->
       </tbody>
     </table>
   </div>
 
   <script>
     const pedidosMock = [
-      ["2025-07-30", "Carlos", "Mesa 4", "2 sucos, 1 salada", "Sem gelo"],
-      ["2025-07-30", "Ana", "Mesa 2", "1 hambúrguer", "Com cheddar extra"],
-      ["2025-07-29", "Carlos", "Mesa 1", "1 refrigerante", ""]
+      ["2025-07-30", "Geane", "350", "COCA COLA LATA 350ML", "", "002", "BARMAN"],
+      ["2025-07-30", "Carlos", "4", "2 sucos, 1 salada", "Sem gelo", "001", "BARMAN"],
+      ["2025-07-29", "Ana", "1", "1 refrigerante", "Com limão", "003", "BALCÃO"]
     ];
 
     const tabela = document.querySelector("#tabelaPedidos tbody");
     const filtroData = document.getElementById("filtroData");
     const filtroGarcom = document.getElementById("filtroGarcom");
 
-    // Define data atual por padrão
     window.onload = () => {
       const hoje = new Date().toISOString().split("T")[0];
       filtroData.value = hoje;
 
-      // Preenche select de garçons dinamicamente
       const garcons = [...new Set(pedidosMock.map(p => p[1]))];
       garcons.forEach(g => {
         const opt = document.createElement("option");
@@ -174,7 +174,7 @@
           <td>${p[2]}</td>
           <td>${p[3]}</td>
           <td>${p[4]}</td>
-          <td><button class="btn-imprimir" onclick="window.print()">🖨️</button></td>
+          <td><button class="btn-imprimir" onclick="imprimirPedido(${JSON.stringify(p).replace(/"/g, '&quot;')})">🖨️</button></td>
         `;
         tabela.appendChild(tr);
       });
@@ -183,6 +183,72 @@
     function formatarData(dataStr) {
       const [ano, mes, dia] = dataStr.split("-");
       return `${dia}/${mes}/${ano}`;
+    }
+
+    function imprimirPedido(pedido) {
+      const [data, garcom, mesa, produto, obs, caixa, impressor] = pedido;
+      const agora = new Date();
+      const hora = agora.toLocaleTimeString('pt-BR');
+      const ms = agora.getMilliseconds();
+      const dataFormatada = formatarData(data);
+
+      const janela = window.open('', '_blank');
+      janela.document.write(`
+        <html>
+        <head>
+          <title>Impressão de Pedido</title>
+          <style>
+            @media print {
+              body {
+                width: 58mm;
+                font-family: monospace;
+                font-size: 12px;
+                padding: 0;
+                margin: 0;
+              }
+              .ticket {
+                width: 100%;
+                padding: 10px;
+                text-align: center;
+              }
+              .ticket h2 {
+                margin: 0;
+                font-size: 18px;
+              }
+              .linha {
+                border-top: 1px dashed #000;
+                margin: 6px 0;
+              }
+              .qtd-produto {
+                text-align: left;
+                margin-top: 5px;
+              }
+            }
+          </style>
+        </head>
+        <body onload="window.print()">
+          <div class="ticket">
+            <div>Via: 1</div>
+            <h2>MESA: ${mesa}</h2>
+            <div>CARTÃO: ${mesa}</div>
+            <div>ATENDENTE: ${garcom}</div>
+            <div>CAIXA: ${caixa}</div>
+            <div>${dataFormatada} ${hora}</div>
+            <div>COMANDA: 1</div>
+
+            <div class="linha"></div>
+            <div style="text-align:left;"><strong>QTD&nbsp;&nbsp;&nbsp;&nbsp;PRODUTO</strong></div>
+            <div class="qtd-produto">1 x ${produto}</div>
+            ${obs ? `<div style="margin-top:4px;">Obs: ${obs}</div>` : ''}
+
+            <div class="linha"></div>
+            <div>IMP: ${impressor}</div>
+            <div>${dataFormatada} ${hora}.${ms}</div>
+          </div>
+        </body>
+        </html>
+      `);
+      janela.document.close();
     }
   </script>
 </body>
