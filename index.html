@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Painel de Pedidos</title>
+  <meta charset="UTF-8" />
+  <title>Pedidos Registrados</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -21,7 +21,7 @@
       flex-wrap: wrap;
       justify-content: center;
     }
-    .filtros input {
+    .filtros input, .filtros button {
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
@@ -35,10 +35,20 @@
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
-      text-align: left;
     }
     th {
       background: #f0f0f0;
+    }
+    .btn-imprimir {
+      padding: 6px 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-impresso {
+      background: green !important;
     }
   </style>
 </head>
@@ -58,12 +68,15 @@
         <th>Mesa</th>
         <th>Pedido</th>
         <th>Observações</th>
+        <th>Imprimir</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
+    const impressaoContador = {};
+
     async function carregarPedidos() {
       const data = document.getElementById("filtroData").value;
       const garcom = document.getElementById("filtroGarcom").value.toLowerCase();
@@ -73,7 +86,12 @@
 
       const tbody = document.querySelector("#tabelaPedidos tbody");
       tbody.innerHTML = "";
-      pedidos.forEach(p => {
+
+      pedidos.forEach((p, index) => {
+        const id = `${p.data}-${p.garcom}-${p.mesa}`.replace(/\s+/g, "-");
+
+        if (!impressaoContador[id]) impressaoContador[id] = 0;
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${new Date(p.data).toLocaleDateString()}</td>
@@ -81,12 +99,43 @@
           <td>${p.mesa}</td>
           <td>${p.pedido}</td>
           <td>${p.observacoes || ""}</td>
+          <td><button class="btn-imprimir" id="btn-${id}" onclick="imprimirPedido('${id}', \`${p.mesa}\`, \`${p.garcom}\`, \`${p.pedido}\`, \`${p.observacoes || ""}\`)">
+            Imprimir (${impressaoContador[id]})
+          </button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // Carrega automaticamente ao abrir
+    function imprimirPedido(id, mesa, garcom, pedido, obs) {
+      if (impressaoContador[id] > 0) {
+        const senha = prompt("Este pedido já foi impresso. Digite a senha para reimprimir:");
+        if (senha !== "1234") {
+          alert("Senha incorreta.");
+          return;
+        }
+      }
+
+      const conteudo = `
+        <div style="font-family: monospace; font-size: 14px;">
+          <h3 style="text-align:center;">PEDIDO</h3>
+          <p><strong>Mesa:</strong> ${mesa}</p>
+          <p><strong>Garçom:</strong> ${garcom}</p>
+          <p><strong>Itens:</strong><br>${pedido.replaceAll("\n", "<br>")}</p>
+          ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ""}
+        </div>
+      `;
+
+      const janela = window.open("", "_blank", "width=300,height=600");
+      janela.document.write(`<html><body onload="window.print(); window.close();">${conteudo}</body></html>`);
+      janela.document.close();
+
+      impressaoContador[id]++;
+      const btn = document.getElementById("btn-" + id);
+      btn.classList.add("btn-impresso");
+      btn.innerText = `Imprimir (${impressaoContador[id]})`;
+    }
+
     carregarPedidos();
   </script>
 </body>
