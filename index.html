@@ -2,141 +2,188 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Pedidos Registrados</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel de Pedidos - Villa Gourmet</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #eef2f3;
+      background: #f1f4f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #fff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    header img {
+      height: 40px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4em;
+      font-weight: bold;
+    }
+
+    .container {
       padding: 20px;
     }
+
     h2 {
       text-align: center;
+      margin-top: 10px;
     }
+
     .filtros {
-      max-width: 800px;
-      margin: 20px auto;
       display: flex;
+      justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      justify-content: center;
+      margin: 20px 0;
     }
-    .filtros input, .filtros button {
+
+    .filtros input,
+    .filtros select,
+    .filtros button {
       padding: 10px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 6px;
+      font-size: 1em;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
+      background: #fff;
     }
+
     th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       padding: 10px;
+      text-align: center;
     }
+
     th {
-      background: #f0f0f0;
+      background: #f9f9f9;
+      font-weight: bold;
     }
+
     .btn-imprimir {
-      padding: 6px 10px;
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: pointer;
     }
-    .btn-impresso {
-      background: green !important;
+
+    .btn-imprimir:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <h2>Pedidos Registrados</h2>
-  <div class="filtros">
-    <input type="date" id="filtroData">
-    <input type="text" id="filtroGarcom" placeholder="Filtrar por Garçom">
-    <button onclick="carregarPedidos()">Filtrar</button>
+
+  <header>
+    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo" />
+    <h1>Painel de Pedidos - Villa Gourmet</h1>
+  </header>
+
+  <div class="container">
+    <h2>Pedidos Registrados</h2>
+
+    <div class="filtros">
+      <input type="date" id="filtroData" />
+      <select id="filtroGarcom">
+        <option value="">Filtrar por Garçom</option>
+      </select>
+      <button onclick="filtrar()">Filtrar</button>
+    </div>
+
+    <table id="tabelaPedidos">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Garçom</th>
+          <th>Mesa</th>
+          <th>Pedido</th>
+          <th>Observações</th>
+          <th>Imprimir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- conteúdo gerado dinamicamente -->
+      </tbody>
+    </table>
   </div>
 
-  <table id="tabelaPedidos">
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Garçom</th>
-        <th>Mesa</th>
-        <th>Pedido</th>
-        <th>Observações</th>
-        <th>Imprimir</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
   <script>
-    const impressaoContador = {};
+    const pedidosMock = [
+      ["2025-07-30", "Carlos", "Mesa 4", "2 sucos, 1 salada", "Sem gelo"],
+      ["2025-07-30", "Ana", "Mesa 2", "1 hambúrguer", "Com cheddar extra"],
+      ["2025-07-29", "Carlos", "Mesa 1", "1 refrigerante", ""]
+    ];
 
-    async function carregarPedidos() {
-      const data = document.getElementById("filtroData").value;
-      const garcom = document.getElementById("filtroGarcom").value.toLowerCase();
-      const url = `URL_DO_SEU_SCRIPT_GOOGLE_APPS_SCRIPT?filtroData=${data}&filtroGarcom=${garcom}`;
-      const res = await fetch(url);
-      const pedidos = await res.json();
+    const tabela = document.querySelector("#tabelaPedidos tbody");
+    const filtroData = document.getElementById("filtroData");
+    const filtroGarcom = document.getElementById("filtroGarcom");
 
-      const tbody = document.querySelector("#tabelaPedidos tbody");
-      tbody.innerHTML = "";
+    // Define data atual por padrão
+    window.onload = () => {
+      const hoje = new Date().toISOString().split("T")[0];
+      filtroData.value = hoje;
 
-      pedidos.forEach((p, index) => {
-        const id = `${p.data}-${p.garcom}-${p.mesa}`.replace(/\s+/g, "-");
+      // Preenche select de garçons dinamicamente
+      const garcons = [...new Set(pedidosMock.map(p => p[1]))];
+      garcons.forEach(g => {
+        const opt = document.createElement("option");
+        opt.value = g;
+        opt.textContent = g;
+        filtroGarcom.appendChild(opt);
+      });
 
-        if (!impressaoContador[id]) impressaoContador[id] = 0;
+      renderizarTabela(pedidosMock);
+    };
 
+    function filtrar() {
+      const data = filtroData.value;
+      const garcom = filtroGarcom.value;
+
+      const filtrados = pedidosMock.filter(p => {
+        return (!data || p[0] === data) && (!garcom || p[1] === garcom);
+      });
+
+      renderizarTabela(filtrados);
+    }
+
+    function renderizarTabela(lista) {
+      tabela.innerHTML = "";
+      if (lista.length === 0) {
+        tabela.innerHTML = `<tr><td colspan="6">Nenhum pedido encontrado.</td></tr>`;
+        return;
+      }
+
+      lista.forEach(p => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${new Date(p.data).toLocaleDateString()}</td>
-          <td>${p.garcom}</td>
-          <td>${p.mesa}</td>
-          <td>${p.pedido}</td>
-          <td>${p.observacoes || ""}</td>
-          <td><button class="btn-imprimir" id="btn-${id}" onclick="imprimirPedido('${id}', \`${p.mesa}\`, \`${p.garcom}\`, \`${p.pedido}\`, \`${p.observacoes || ""}\`)">
-            Imprimir (${impressaoContador[id]})
-          </button></td>
+          <td>${formatarData(p[0])}</td>
+          <td>${p[1]}</td>
+          <td>${p[2]}</td>
+          <td>${p[3]}</td>
+          <td>${p[4]}</td>
+          <td><button class="btn-imprimir" onclick="window.print()">🖨️</button></td>
         `;
-        tbody.appendChild(tr);
+        tabela.appendChild(tr);
       });
     }
 
-    function imprimirPedido(id, mesa, garcom, pedido, obs) {
-      if (impressaoContador[id] > 0) {
-        const senha = prompt("Este pedido já foi impresso. Digite a senha para reimprimir:");
-        if (senha !== "1234") {
-          alert("Senha incorreta.");
-          return;
-        }
-      }
-
-      const conteudo = `
-        <div style="font-family: monospace; font-size: 14px;">
-          <h3 style="text-align:center;">PEDIDO</h3>
-          <p><strong>Mesa:</strong> ${mesa}</p>
-          <p><strong>Garçom:</strong> ${garcom}</p>
-          <p><strong>Itens:</strong><br>${pedido.replaceAll("\n", "<br>")}</p>
-          ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ""}
-        </div>
-      `;
-
-      const janela = window.open("", "_blank", "width=300,height=600");
-      janela.document.write(`<html><body onload="window.print(); window.close();">${conteudo}</body></html>`);
-      janela.document.close();
-
-      impressaoContador[id]++;
-      const btn = document.getElementById("btn-" + id);
-      btn.classList.add("btn-impresso");
-      btn.innerText = `Imprimir (${impressaoContador[id]})`;
+    function formatarData(dataStr) {
+      const [ano, mes, dia] = dataStr.split("-");
+      return `${dia}/${mes}/${ano}`;
     }
-
-    carregarPedidos();
   </script>
 </body>
 </html>
