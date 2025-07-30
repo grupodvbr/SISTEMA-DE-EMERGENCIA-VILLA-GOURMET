@@ -2,254 +2,196 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <title>Painel de Pedidos | CB Systems</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel de Pedidos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f1f4f5;
+      background: #f3f6f8;
       margin: 0;
+      padding: 20px;
     }
-
     header {
-      background: #fff;
-      padding: 10px 20px;
       display: flex;
       align-items: center;
-      gap: 15px;
-      border-bottom: 1px solid #ddd;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
     header img {
       height: 40px;
     }
-
-    header h1 {
+    h1 {
+      font-size: 1.6em;
       margin: 0;
-      font-size: 1.4em;
-      font-weight: bold;
     }
-
-    .container {
-      padding: 20px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .filtros {
+    .formulario, .filtros {
       display: flex;
-      justify-content: center;
-      gap: 10px;
       flex-wrap: wrap;
-      margin: 20px 0;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
-    .filtros input,
-    .filtros select,
-    .filtros button {
-      padding: 10px;
+    .formulario input, .formulario textarea, .formulario select {
+      padding: 8px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1em;
     }
-
+    .formulario button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
+      background: white;
     }
-
     th, td {
       border: 1px solid #ddd;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
     }
-
     th {
-      background: #f9f9f9;
-      font-weight: bold;
+      background: #f0f0f0;
     }
-
-    .btn-imprimir {
-      background: #007bff;
+    .imprimir {
       color: white;
+      background-color: green;
       border: none;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
-    }
-
-    .btn-imprimir:hover {
-      background: #0056b3;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo" />
+    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" />
     <h1>Painel de Requisições Delícia Gourmet</h1>
   </header>
 
-  <div class="container">
-    <h2>Pedidos Registrados</h2>
-
-    <div class="filtros">
-      <input type="date" id="filtroData">
-      <select id="filtroGarcom">
-        <option value="">Filtrar por Garçom</option>
-      </select>
-      <button onclick="filtrar()">Filtrar</button>
-    </div>
-
-    <table id="tabelaPedidos">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Garçom</th>
-          <th>Mesa</th>
-          <th>Pedido</th>
-          <th>Observações</th>
-          <th>Imprimir</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Preenchido via JS -->
-      </tbody>
-    </table>
+  <div class="formulario">
+    <input type="date" id="data" />
+    <select id="garcom">
+      <option value="">Selecione o garçom</option>
+      <option value="Barman">Barman</option>
+      <option value="Garçom 1">Garçom 1</option>
+      <option value="Garçom 2">Garçom 2</option>
+    </select>
+    <input type="text" id="mesa" placeholder="Mesa" />
+    <input type="text" id="pedido" placeholder="Pedido" />
+    <input type="text" id="obs" placeholder="Observações" />
+    <button onclick="registrarPedido()">Registrar</button>
   </div>
 
-  <script>
-    const pedidosMock = [
-      ["2025-07-30", "Geane", "350", "COCA COLA LATA 350ML", "", "002", "BARMAN"],
-      ["2025-07-30", "Carlos", "4", "2 sucos, 1 salada", "Sem gelo", "001", "BARMAN"],
-      ["2025-07-29", "Ana", "1", "1 refrigerante", "Com limão", "003", "BALCÃO"]
-    ];
+  <div class="filtros">
+    <input type="date" id="filtroData" />
+    <select id="filtroGarcom">
+      <option value="">Todos os garçons</option>
+      <option value="Barman">Barman</option>
+      <option value="Garçom 1">Garçom 1</option>
+      <option value="Garçom 2">Garçom 2</option>
+    </select>
+    <button onclick="carregarPedidos()">Filtrar</button>
+  </div>
 
-    const tabela = document.querySelector("#tabelaPedidos tbody");
-    const filtroData = document.getElementById("filtroData");
-    const filtroGarcom = document.getElementById("filtroGarcom");
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Garçom</th>
+        <th>Mesa</th>
+        <th>Pedido</th>
+        <th>Observações</th>
+        <th>Imprimir</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const scriptURL = "SUA_URL_DO_APPS_SCRIPT";
+
+    function registrarPedido() {
+      const data = document.getElementById('data').value;
+      const garcom = document.getElementById('garcom').value;
+      const mesa = document.getElementById('mesa').value;
+      const pedido = document.getElementById('pedido').value;
+      const obs = document.getElementById('obs').value;
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify({
+          acao: "registrar",
+          data, garcom, mesa, pedido, obs
+        })
+      }).then(() => {
+        alert("Pedido registrado!");
+        carregarPedidos();
+      });
+    }
+
+    function carregarPedidos() {
+      const filtroData = document.getElementById('filtroData').value;
+      const filtroGarcom = document.getElementById('filtroGarcom').value;
+
+      fetch(scriptURL + "?acao=carregar")
+        .then(res => res.json())
+        .then(dados => {
+          const tbody = document.querySelector("#tabela tbody");
+          tbody.innerHTML = "";
+
+          dados.forEach(linha => {
+            if ((filtroData && linha.data !== filtroData) || (filtroGarcom && linha.garcom !== filtroGarcom)) return;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${linha.data}</td>
+              <td>${linha.garcom}</td>
+              <td>${linha.mesa}</td>
+              <td>${linha.pedido}</td>
+              <td>${linha.obs}</td>
+              <td><button class="imprimir" onclick='imprimirRecibo(${JSON.stringify(linha)})'>🖨️</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function imprimirRecibo(dados) {
+      const win = window.open('', '', 'width=300,height=600');
+      win.document.write(`
+        <pre style="font-family:monospace; font-size:14px">
+Via: 1
+MESA: ${dados.mesa}
+CARTÃO: ${dados.mesa}
+ATENDENTE: ${dados.garcom}
+DATA: ${dados.data}
+
+QTD   PRODUTO
+1 x ${dados.pedido}
+
+OBS: ${dados.obs}
+
+IMP: ${dados.garcom}
+${new Date().toLocaleString()}
+        </pre>
+      `);
+      win.document.close();
+      win.print();
+    }
 
     window.onload = () => {
-      const hoje = new Date().toISOString().split("T")[0];
-      filtroData.value = hoje;
-
-      const garcons = [...new Set(pedidosMock.map(p => p[1]))];
-      garcons.forEach(g => {
-        const opt = document.createElement("option");
-        opt.value = g;
-        opt.textContent = g;
-        filtroGarcom.appendChild(opt);
-      });
-
-      renderizarTabela(pedidosMock);
+      const hoje = new Date().toISOString().substr(0, 10);
+      document.getElementById('data').value = hoje;
+      document.getElementById('filtroData').value = hoje;
+      carregarPedidos();
     };
-
-    function filtrar() {
-      const data = filtroData.value;
-      const garcom = filtroGarcom.value;
-
-      const filtrados = pedidosMock.filter(p => {
-        return (!data || p[0] === data) && (!garcom || p[1] === garcom);
-      });
-
-      renderizarTabela(filtrados);
-    }
-
-    function renderizarTabela(lista) {
-      tabela.innerHTML = "";
-      if (lista.length === 0) {
-        tabela.innerHTML = `<tr><td colspan="6">Nenhum pedido encontrado.</td></tr>`;
-        return;
-      }
-
-      lista.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${formatarData(p[0])}</td>
-          <td>${p[1]}</td>
-          <td>${p[2]}</td>
-          <td>${p[3]}</td>
-          <td>${p[4]}</td>
-          <td><button class="btn-imprimir" onclick="imprimirPedido(${JSON.stringify(p).replace(/"/g, '&quot;')})">🖨️</button></td>
-        `;
-        tabela.appendChild(tr);
-      });
-    }
-
-    function formatarData(dataStr) {
-      const [ano, mes, dia] = dataStr.split("-");
-      return `${dia}/${mes}/${ano}`;
-    }
-
-    function imprimirPedido(pedido) {
-      const [data, garcom, mesa, produto, obs, caixa, impressor] = pedido;
-      const agora = new Date();
-      const hora = agora.toLocaleTimeString('pt-BR');
-      const ms = agora.getMilliseconds();
-      const dataFormatada = formatarData(data);
-
-      const janela = window.open('', '_blank');
-      janela.document.write(`
-        <html>
-        <head>
-          <title>Impressão de Pedido</title>
-          <style>
-            @media print {
-              body {
-                width: 58mm;
-                font-family: monospace;
-                font-size: 12px;
-                padding: 0;
-                margin: 0;
-              }
-              .ticket {
-                width: 100%;
-                padding: 10px;
-                text-align: center;
-              }
-              .ticket h2 {
-                margin: 0;
-                font-size: 18px;
-              }
-              .linha {
-                border-top: 1px dashed #000;
-                margin: 6px 0;
-              }
-              .qtd-produto {
-                text-align: left;
-                margin-top: 5px;
-              }
-            }
-          </style>
-        </head>
-        <body onload="window.print()">
-          <div class="ticket">
-            <div>Via: 1</div>
-            <h2>MESA: ${mesa}</h2>
-            <div>CARTÃO: ${mesa}</div>
-            <div>ATENDENTE: ${garcom}</div>
-            <div>CAIXA: ${caixa}</div>
-            <div>${dataFormatada} ${hora}</div>
-            <div>COMANDA: 1</div>
-
-            <div class="linha"></div>
-            <div style="text-align:left;"><strong>QTD&nbsp;&nbsp;&nbsp;&nbsp;PRODUTO</strong></div>
-            <div class="qtd-produto">1 x ${produto}</div>
-            ${obs ? `<div style="margin-top:4px;">Obs: ${obs}</div>` : ''}
-
-            <div class="linha"></div>
-            <div>IMP: ${impressor}</div>
-            <div>${dataFormatada} ${hora}.${ms}</div>
-          </div>
-        </body>
-        </html>
-      `);
-      janela.document.close();
-    }
   </script>
+
 </body>
 </html>
