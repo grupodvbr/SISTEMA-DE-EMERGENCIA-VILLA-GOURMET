@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Pedidos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f3;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .filtros {
+      max-width: 800px;
+      margin: 20px auto;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .filtros input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Pedidos Registrados</h2>
+  <div class="filtros">
+    <input type="date" id="filtroData">
+    <input type="text" id="filtroGarcom" placeholder="Filtrar por Garçom">
+    <button onclick="carregarPedidos()">Filtrar</button>
+  </div>
+
+  <table id="tabelaPedidos">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Garçom</th>
+        <th>Mesa</th>
+        <th>Pedido</th>
+        <th>Observações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function carregarPedidos() {
+      const data = document.getElementById("filtroData").value;
+      const garcom = document.getElementById("filtroGarcom").value.toLowerCase();
+      const url = `URL_DO_SEU_SCRIPT_GOOGLE_APPS_SCRIPT?filtroData=${data}&filtroGarcom=${garcom}`;
+      const res = await fetch(url);
+      const pedidos = await res.json();
+
+      const tbody = document.querySelector("#tabelaPedidos tbody");
+      tbody.innerHTML = "";
+      pedidos.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${new Date(p.data).toLocaleDateString()}</td>
+          <td>${p.garcom}</td>
+          <td>${p.mesa}</td>
+          <td>${p.pedido}</td>
+          <td>${p.observacoes || ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Carrega automaticamente ao abrir
+    carregarPedidos();
+  </script>
+</body>
+</html>
